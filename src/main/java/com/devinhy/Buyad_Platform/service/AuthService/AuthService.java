@@ -10,8 +10,10 @@ import com.devinhy.Buyad_Platform.exception.InvalidCredentialsException;
 import com.devinhy.Buyad_Platform.model.Role;
 import com.devinhy.Buyad_Platform.model.User;
 import com.devinhy.Buyad_Platform.repository.UserRepository;
+import com.devinhy.Buyad_Platform.service.JwtService;
 import jdk.jshell.spi.ExecutionControl;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.jdbc.Expectation;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public UserResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -45,9 +48,17 @@ public class AuthService {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new InvalidCredentialsException("Invalid email or password."));
 
         if (!user.isEmailVerified()) {
+            throw new InvalidCredentialsException("Please verify your email before logging in.");
+        }
+        boolean passwordMatches = passwordEncoder.matches(request.getPassword(), user.getPassword());
+        if (!passwordMatches) {
             throw new InvalidCredentialsException("Invalid email or password.");
         }
 
+        String token = jwtService.generateToken(user);
 
+        UserResponse userResponse = new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole());
+
+        return new LoginResponse(token, userResponse);
     }
 }

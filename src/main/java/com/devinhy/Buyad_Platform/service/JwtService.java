@@ -1,6 +1,7 @@
 package com.devinhy.Buyad_Platform.service;
 
 import com.devinhy.Buyad_Platform.model.User;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,5 +31,34 @@ public class JwtService {
                 .expiration(expiryDate)
                 .signWith(secretKey)
                 .compact();
+    }
+
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser().verifyWith(secretKey).build()
+                .parseSignedClaims(token).getPayload();
+    }
+
+    public boolean isTokenValid(String token) {
+
+        try {
+            Claims claims = extractAllClaims(token);
+            return true;
+        }catch (Exception ex){
+            return false;
+        }
+
+    }
+    public String extractMail(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            return claims.getSubject();
+        }catch (Exception ex){
+            return null;
+        }
+
+    }
+
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
     }
 }

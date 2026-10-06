@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,5 +25,18 @@ public class AuthController {
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
         UserResponse response = authService.register(registerRequest);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+
+    @GetMapping("DSP")
+    @PreAuthorize("hasRole('DSP')")
+    public String dsp() {
+        return "DSP endpoint";
+    }
+
+    @GetMapping("SSP")
+    @PreAuthorize("hasRole('SSP')")
+    public String ssp() {
+        return "SSP endpoint";
     }
 }
