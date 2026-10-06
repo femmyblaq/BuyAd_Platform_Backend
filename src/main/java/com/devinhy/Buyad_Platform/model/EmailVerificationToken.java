@@ -1,13 +1,20 @@
 package com.devinhy.Buyad_Platform.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-
+@Entity
+@Table(name = "email_verification_tokens")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class EmailVerificationToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
     @Column(nullable = false, unique = true)
     private String token;
     @OneToOne

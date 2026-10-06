@@ -7,10 +7,14 @@ import com.devinhy.Buyad_Platform.auth.dto.UserResponse;
 import com.devinhy.Buyad_Platform.exception.AdminAlreadyExistsException;
 import com.devinhy.Buyad_Platform.exception.EmailAlreadyExistsException;
 import com.devinhy.Buyad_Platform.exception.InvalidCredentialsException;
+import com.devinhy.Buyad_Platform.model.EmailVerificationToken;
 import com.devinhy.Buyad_Platform.model.Role;
 import com.devinhy.Buyad_Platform.model.User;
+import com.devinhy.Buyad_Platform.repository.EmailVerificationTokenRepository;
 import com.devinhy.Buyad_Platform.repository.UserRepository;
+import com.devinhy.Buyad_Platform.service.EmailService;
 import com.devinhy.Buyad_Platform.service.JwtService;
+import com.devinhy.Buyad_Platform.util.TokenGenerator;
 import jdk.jshell.spi.ExecutionControl;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.jdbc.Expectation;
@@ -18,13 +22,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-
+    private EmailService emailService;
+    private EmailVerificationTokenRepository tokenRepository;
     public UserResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException("Email already exists");
@@ -38,8 +45,16 @@ public class AuthService {
                                 .password(passwordEncoder.encode(request.getPassword()))
                                 .role(request.getRole())
                                 .build();
-
+        user.setEmailVerified(false);
         User saveUser =  userRepository.save(user);
+        String token = TokenGenerator.generateToken();
+        EmailVerificationToken verificationToken = new EmailVerificationToken();
+        verificationToken.setToken(token);
+        verificationToken.setUser(saveUser);
+        verificationToken.setCreatedAt(LocalDateTime.now() );
+        verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
+        tokenRepository.save(verificationToken);
+        emailService.sendVerificationEmail(saveUser.getEmail(), token);
         return new UserResponse(saveUser.getId(), saveUser.getUsername(), saveUser.getEmail(), saveUser.getRole());
     }
 

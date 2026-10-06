@@ -1,4 +1,6 @@
 package com.devinhy.Buyad_Platform.controller;
+import com.devinhy.Buyad_Platform.auth.dto.LoginRequest;
+import com.devinhy.Buyad_Platform.auth.dto.LoginResponse;
 import com.devinhy.Buyad_Platform.auth.dto.RegisterRequest;
 import com.devinhy.Buyad_Platform.auth.dto.UserResponse;
 import com.devinhy.Buyad_Platform.model.User;
@@ -26,6 +28,13 @@ public class AuthController {
         UserResponse response = authService.register(registerRequest);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
+
+//    @PostMapping("/login")
+//    @ResponseStatus(HttpStatus.OK)
+//    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
+//        UserResponse response = authService.login(loginRequest);
+//        return new ResponseEntity<>(response, HttpStatus.OK);
+//    }
 
 
     @GetMapping("DSP")
