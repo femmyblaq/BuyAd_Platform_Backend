@@ -5,37 +5,53 @@ import com.devinhy.Buyad_Platform.auth.dto.RegisterRequest;
 import com.devinhy.Buyad_Platform.auth.dto.UserResponse;
 import com.devinhy.Buyad_Platform.model.User;
 import com.devinhy.Buyad_Platform.repository.ResponseMessage;
+import com.devinhy.Buyad_Platform.repository.UserRepository;
 import com.devinhy.Buyad_Platform.service.AuthService.AuthService;
-//import com.devinhy.Buyad_Platform.service.UserService;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+    private final UserRepository userRepository;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest registerRequest) throws MessagingException {
         UserResponse response = authService.register(registerRequest);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-//    @PostMapping("/login")
-//    @ResponseStatus(HttpStatus.OK)
-//    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
-//        UserResponse response = authService.login(loginRequest);
-//        return new ResponseEntity<>(response, HttpStatus.OK);
-//    }
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
+        LoginResponse response = authService.login(loginRequest);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
+    @GetMapping("/verify")
+    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+//        authService.very
+        return null;
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
+        String email =  authentication.getName();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found."));
+        UserResponse response = new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole());
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("DSP")
     @PreAuthorize("hasRole('DSP')")

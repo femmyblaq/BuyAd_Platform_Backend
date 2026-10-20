@@ -15,6 +15,7 @@ import com.devinhy.Buyad_Platform.repository.UserRepository;
 import com.devinhy.Buyad_Platform.service.EmailService;
 import com.devinhy.Buyad_Platform.service.JwtService;
 import com.devinhy.Buyad_Platform.util.TokenGenerator;
+import jakarta.mail.MessagingException;
 import jdk.jshell.spi.ExecutionControl;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.jdbc.Expectation;
@@ -30,9 +31,9 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private EmailService emailService;
-    private EmailVerificationTokenRepository tokenRepository;
-    public UserResponse register(RegisterRequest request) {
+    private final EmailService emailService;
+    private final EmailVerificationTokenRepository tokenRepository;
+    public UserResponse register(RegisterRequest request) throws MessagingException {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException("Email already exists");
         }
@@ -51,12 +52,13 @@ public class AuthService {
         EmailVerificationToken verificationToken = new EmailVerificationToken();
         verificationToken.setToken(token);
         verificationToken.setUser(saveUser);
-        verificationToken.setCreatedAt(LocalDateTime.now() );
+        verificationToken.setCreatedAt(LocalDateTime.now());
         verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
         tokenRepository.save(verificationToken);
         emailService.sendVerificationEmail(saveUser.getEmail(), token);
         return new UserResponse(saveUser.getId(), saveUser.getUsername(), saveUser.getEmail(), saveUser.getRole());
     }
+
 
     public LoginResponse login(LoginRequest request) throws InvalidCredentialsException {
         String email = request.getEmail().trim().toLowerCase();
