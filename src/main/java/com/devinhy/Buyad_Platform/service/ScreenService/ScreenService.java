@@ -60,4 +60,29 @@ public class ScreenService {
     public List<ScreenResponse> getMyScreens(User user) {
         return screenRepository.findByUserId(user.getId()).stream().map(ScreenResponse::fromEntity).toList();
     }
+
+    public ScreenResponse  getScreen(Long screenId, User user) {
+        Screen screen = screenRepository.findByIdAndUserId(screenId, user.getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Screen not found"));
+
+        return ScreenResponse.fromEntity(screen);
+    }
+
+    public ScreenResponse updateScreen(Long screenId, ScreenCreateRequest request, MultipartFile image, User user) throws IOException {
+        Screen screen = screenRepository.findByIdAndUserId(screenId, user.getId()).orElseThrow(() -> new RuntimeException("Screen not found"));
+
+
+        screen.setDescription(request.getDescription().trim());
+        screen.setScreenName(request.getScreenName().trim());
+        screen.setCurrency(request.getCurrency().trim());
+        screen.setPrice(request.getPrice());
+        screen.setScreenType(request.getScreenType());
+        screen.setLocation(request.getCountry().trim());
+
+        if (image != null &&  !image.isEmpty()) {
+            String imageFileName = imageStorageService.store(image);
+            screen.setImageUrl(imageFileName);
+        }
+        Screen updatedScreen = screenRepository.save(screen);
+        return ScreenResponse.fromEntity(updatedScreen);
+    }
 }

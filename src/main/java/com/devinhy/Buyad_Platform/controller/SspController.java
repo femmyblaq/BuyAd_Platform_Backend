@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -65,5 +66,33 @@ public class SspController {
         return ResponseEntity.ok(
                 screenService.getMyScreens(user)
         );
+    }
+
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('SSP')")
+    public ResponseEntity<ScreenResponse> getScreen(@PathVariable Long id, Authentication authentication) {
+        if (!(authentication.getPrincipal() instanceof User user)) {
+            throw new IllegalStateException("The authenticated principal is not a User entity");
+        }
+        ScreenResponse  response =  screenService.getScreen(id, user);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping(value = "/{id{", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('SSP')")
+    public ResponseEntity<ScreenResponse> updateScreen(@PathVariable Long id,
+                                                       @Valid @ModelAttribute ScreenCreateRequest request,
+                                                       @RequestParam(value = "image", required = false) MultipartFile image,
+                                                       Authentication authentication) throws IOException {
+            if (!(authentication.getPrincipal() instanceof User user)) {
+                throw new IllegalStateException("The authenticated principal is not a User entity");
+            }
+
+            ScreenResponse response =
+                    screenService.updateScreen(id, request, image, user);
+
+            return ResponseEntity.ok(response);
     }
 }
